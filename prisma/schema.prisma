@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @id @default(cuid())
+  name        String?
+  email       String        @unique
+  markups     Markup[]
+  sessions    SessionUser[]
+  activities  Activity[]
+  createdAt   DateTime      @default(now())
+}
+
+model Project {
+  id            String          @id @default(cuid())
+  name          String
+  address       String?
+  projectNumber String?
+  status        String          @default("active")
+  description   String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  drawings      Drawing[]
+  sessions      StudioSession[]
+}
+
+model Drawing {
+  id             String           @id @default(cuid())
+  projectId      String
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  drawingNumber  String?
+  title          String
+  discipline     String?
+  currentVersion Int              @default(1)
+  pageCount      Int              @default(1)
+  thumbnailUrl   String?
+
+  versions       DrawingVersion[]
+  markups        Markup[]
+  measurements   Measurement[]
+  scales         DrawingScale[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model DrawingVersion {
+  id         String   @id @default(cuid())
+  drawingId  String
+  drawing    Drawing  @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+
+  version    Int
+  fileUrl    String
+  uploadedBy String?
+  notes      String?
+  uploadedAt DateTime @default(now())
+
+  @@unique([drawingId, version])
+}
+
+model StudioSession {
+  id        String        @id @default(cuid())
+  projectId String
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name      String
+  status    SessionStatus @default(ACTIVE)
+
+  users     SessionUser[]
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model SessionUser {
+  id        String        @id @default(cuid())
+  sessionId String
+  userId    String
+
+  session   StudioSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id])
+
+  userName  String?
+  color     String?
+  joinedAt  DateTime      @default(now())
+  lastSeen  DateTime      @default(now())
+
+  @@unique([sessionId, userId])
+}
+
+model Markup {
+  id          String       @id @default(cuid())
+
+  drawingId   String
+  drawing     Drawing      @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+
+  page        Int          @default(1)
+  type        MarkupType
+
+  x           Float        @default(0)
+  y           Float        @default(0)
+  width       Float?
+  height      Float?
+  points      Json?
+  text        String?
+  color       String       @default("#EF4444")
+  strokeWidth Float        @default(2)
+
+  label       String?
+  assignedTo  String?
+  status      MarkupStatus @default(OPEN)
+  comment     String?
+  resolvedAt  DateTime?
+
+  metadata    Json?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Measurement {
+  id         String          @id @default(cuid())
+
+  drawingId  String
+  drawing    Drawing         @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+
+  page       Int             @default(1)
+  type       MeasurementType
+
+  points     Json
+  value      Float
+  unit       String          @default("ft")
+  label      String?
+
+  authorName String?
+  authorId   String?
+
+  createdAt  DateTime        @default(now())
+}
+
+model DrawingScale {
+  id              String   @id @default(cuid())
+  drawingId       String
+  drawing         Drawing  @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+
+  page            Int      @default(1)
+  pixelsPerFoot   Float
+  calibrationJson Json?
+
+  createdAt       DateTime @default(now())
+
+  @@unique([drawingId, page])
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+
+  entityType String
+  entityId   String
+  action     String
+  metadata   Json?
+
+  createdAt  DateTime @default(now())
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum MarkupStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  VOID
+}
+
+enum MarkupType {
+  TEXT
+  HIGHLIGHT
+  RECTANGLE
+  CIRCLE
+  CLOUD
+  ARROW
+  FREEHAND
+  LINE
+  LENGTH
+  AREA
+  COUNT
+  STAMP
+  PHOTO
+  EQUIPMENT
+}
+
+enum MeasurementType {
+  LENGTH
+  AREA
+  COUNT
+}

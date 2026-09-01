@@ -9,13 +9,21 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "konva": "^10.3.2",
     "next": "16.3.4",
+    "pdfjs-dist": "^6.3.289",
+    "prisma": "^8.0.0-rc.12",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-konva": "^19.2.5",
+    "y-websocket": "^3.1.0",
+    "yjs": "^13.6.32",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
