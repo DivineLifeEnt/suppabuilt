@@ -10,6 +10,16 @@ import MarkupPanel from "./MarkupPanel";
 import DrawingNavigator from "./DrawingNavigator";
 import { MarkupLayer } from "@/components/markup/MarkupLayer";
 import { MarkupSaveStatus } from "@/components/markup/MarkupSaveStatus";
+import { MeasurementLayer } from "@/components/measurement/MeasurementLayer";
+import { MeasurementToolbar } from "@/components/measurement/MeasurementToolbar";
+import { CalibrationWarning } from "@/components/measurement/CalibrationWarning";
+import { CalibrationDialog } from "@/components/measurement/CalibrationDialog";
+import { MeasurementListPanel } from "@/components/measurement/MeasurementListPanel";
+import { MeasurementTotals } from "@/components/measurement/MeasurementTotals";
+import { MeasurementSaveStatus } from "@/components/measurement/MeasurementSaveStatus";
+import { useMeasurementStore } from "@/stores/measurementStore";
+import type { NormalizedPoint } from "@/lib/markup/types";
+import type { Calibration } from "@/lib/measurement/types";
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
@@ -168,10 +178,11 @@ export function StudioShell() {
           onChange={e => e.target.files?.[0] && openLocal(e.target.files[0])} />
       </header>
 
-      {/* Markup toolbar */}
+      {/* Markup + measurement toolbars */}
       {pdf && (
-        <div className="toolbar-row">
+        <div className="toolbar-row flex flex-col">
           <StudioToolbar />
+          <MeasurementToolbar />
         </div>
       )}
 
@@ -221,8 +232,19 @@ export function StudioShell() {
         )}
       </section>
 
-      {/* Right panel — markups */}
-      {pdf && <MarkupPanel />}
+      {/* Right panel — markups + measurements */}
+      {pdf && (
+        <div className="flex flex-col min-h-0 border-l border-[#26313c] bg-[#0d131a]" style={{ width: 220 }}>
+          <MarkupPanel />
+          <div className="border-t border-[#222c36]">
+            <div className="flex h-8 items-center px-3 border-b border-[#222c36]">
+              <span className="text-[9px] font-bold tracking-[.14em] text-[#8895a2]">MEASUREMENTS</span>
+            </div>
+            <MeasurementListPanel pageNumber={page} calibration={null} />
+            <MeasurementTotals pageNumber={page} calibration={null} />
+          </div>
+        </div>
+      )}
 
       {/* Status bar */}
       <footer className="statusbar flex items-center gap-4 border-t border-[#26313c] bg-[#0b1016] px-3 text-[10px] text-[#73808c]">
@@ -233,6 +255,7 @@ export function StudioShell() {
         {plan && <span>{formatBytes(plan.size)}</span>}
         {pageInfo && <span className="desktop-only">{formatDimensions(pageInfo.width, pageInfo.height)} · {rotation}°</span>}
         {pdf && <MarkupSaveStatus />}
+        {pdf && <MeasurementSaveStatus />}
         <span className="ml-auto desktop-only text-[#556370]">← → pages · Ctrl +/− zoom · Ctrl 0 fit · R rotate · V select · P pen</span>
         {pdf && <span className="md:hidden">Sheet {page} / {pdf.numPages} · {Math.round(zoom * 100)}%</span>}
       </footer>
@@ -291,6 +314,29 @@ function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo }: {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [loaded, setLoaded] = useState(false);
+  const [calibDialogPoints, setCalibDialogPoints] = useState<[NormalizedPoint, NormalizedPoint] | null>(null);
+
+  const { calibrations, pageCalibration, addCalibration, setPageCalibration, draftPoints, activeTool } = useMeasurementStore();
+  const activeCalibId = pageCalibration[pageNumber] ?? null;
+  const activeCal: Calibration | null = activeCalibId ? (calibrations[activeCalibId] ?? null) : (
+    // Fall back to document-default calibration
+    Object.values(calibrations).find((c) => c.pageNumber === null) ?? null
+  );
+
+  // When calibrate tool commits 2 draft points, show the dialog
+  const handleRequestCalibrate = () => {
+    if (draftPoints.length >= 2) {
+      setCalibDialogPoints([draftPoints[0], draftPoints[1]]);
+    }
+  };
+
+  const handleCalibSaved = (cal: Calibration) => {
+    addCalibration(cal);
+    if (cal.pageNumber !== null) {
+      setPageCalibration(cal.pageNumber, cal.id);
+    }
+    setCalibDialogPoints(null);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -334,6 +380,35 @@ function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo }: {
           zoom={scale}
           rotation={rotation}
           canvasRef={canvasRef}
+        />
+      )}
+      {loaded && (
+        <MeasurementLayer
+          planId="local"
+          pageNumber={pageNumber}
+          pageWidth={size.width}
+          pageHeight={size.height}
+          zoom={scale}
+          rotation={rotation}
+          calibration={activeCal}
+          canvasRef={canvasRef}
+          onRequestCalibrate={handleRequestCalibrate}
+        />
+      )}
+      {loaded && !activeCal && activeTool && activeTool !== "calibrate" && (
+        <CalibrationWarning onCalibrate={() => {
+          useMeasurementStore.getState().setTool("calibrate");
+        }} />
+      )}
+      {calibDialogPoints && (
+        <CalibrationDialog
+          planId="local"
+          pageNumber={pageNumber}
+          points={calibDialogPoints}
+          pageWidth={size.width}
+          pageHeight={size.height}
+          onSaved={handleCalibSaved}
+          onCancel={() => setCalibDialogPoints(null)}
         />
       )}
     </div>

@@ -249,3 +249,86 @@ model MarkupRevision {
 
   @@index([markupId])
 }
+
+// ─── Sprint 3: Measurement Engine ────────────────────────────────────────────
+
+model MeasurementCalibration {
+  id                       String   @id @default(cuid())
+  planId                   String
+  pageNumber               Int?
+  name                     String
+  normalizedStartJson      String
+  normalizedEndJson        String
+  knownDistanceMillimeters Float
+  pageUnitsPerMillimeter   Float
+  unitSystem               String
+  displayUnit              String
+  precision                Int
+  architecturalDenominator Int?
+  authorName               String
+  revision                 Int      @default(1)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  measurements             PlanMeasurement[]
+
+  @@index([planId])
+  @@index([planId, pageNumber])
+}
+
+model PlanMeasurement {
+  id            String                  @id @default(cuid())
+  planId        String
+  pageNumber    Int
+  type          String
+  calibrationId String?
+  calibration   MeasurementCalibration? @relation(fields: [calibrationId], references: [id])
+  geometryJson  String
+  styleJson     String
+  label         String?
+  prefix        String?
+  suffix        String?
+  status        String                  @default("open")
+  locked        Boolean                 @default(false)
+  visible       Boolean                 @default(true)
+  groupId       String?
+  group         MeasurementGroup?       @relation(fields: [groupId], references: [id])
+  zIndex        Int                     @default(0)
+  authorName    String
+  revision      Int                     @default(1)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  revisions     MeasurementRevision[]
+
+  @@index([planId])
+  @@index([planId, pageNumber])
+  @@index([planId, pageNumber, type])
+  @@index([calibrationId])
+  @@index([groupId])
+  @@index([updatedAt])
+}
+
+model MeasurementRevision {
+  id            String          @id @default(cuid())
+  measurementId String
+  measurement   PlanMeasurement @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+  revision      Int
+  geometryJson  String
+  changedBy     String
+  changedAt     DateTime        @default(now())
+
+  @@index([measurementId])
+}
+
+model MeasurementGroup {
+  id           String            @id @default(cuid())
+  planId       String
+  name         String
+  color        String            @default("#F59E0B")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  measurements PlanMeasurement[]
+
+  @@index([planId])
+}
