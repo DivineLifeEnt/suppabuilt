@@ -211,3 +211,41 @@ enum MeasurementType {
   AREA
   COUNT
 }
+
+model PlanMarkup {
+  id           String   @id @default(cuid())
+  planId       String
+  pageNumber   Int
+  tool         String
+  geometryJson String
+  styleJson    String
+  status       String   @default("open")
+  locked       Boolean  @default(false)
+  visible      Boolean  @default(true)
+  zIndex       Int      @default(0)
+  label        String?
+  comment      String?
+  authorName   String
+  revision     Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  revisions    MarkupRevision[]
+
+  @@index([planId])
+  @@index([planId, pageNumber])
+  @@index([updatedAt])
+}
+
+model MarkupRevision {
+  id           String     @id @default(cuid())
+  markupId     String
+  markup       PlanMarkup @relation(fields: [markupId], references: [id], onDelete: Cascade)
+  revision     Int
+  geometryJson String
+  styleJson    String
+  changedBy    String
+  changedAt    DateTime   @default(now())
+
+  @@index([markupId])
+}

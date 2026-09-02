@@ -8,6 +8,8 @@ import { useStudioStore } from "@/lib/store";
 import StudioToolbar from "./StudioToolbar";
 import MarkupPanel from "./MarkupPanel";
 import DrawingNavigator from "./DrawingNavigator";
+import { MarkupLayer } from "@/components/markup/MarkupLayer";
+import { MarkupSaveStatus } from "@/components/markup/MarkupSaveStatus";
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
@@ -230,7 +232,8 @@ export function StudioShell() {
         </span>
         {plan && <span>{formatBytes(plan.size)}</span>}
         {pageInfo && <span className="desktop-only">{formatDimensions(pageInfo.width, pageInfo.height)} · {rotation}°</span>}
-        <span className="ml-auto desktop-only text-[#556370]">← → pages · Ctrl +/− zoom · Ctrl 0 fit · R rotate</span>
+        {pdf && <MarkupSaveStatus />}
+        <span className="ml-auto desktop-only text-[#556370]">← → pages · Ctrl +/− zoom · Ctrl 0 fit · R rotate · V select · P pen</span>
         {pdf && <span className="md:hidden">Sheet {page} / {pdf.numPages} · {Math.round(zoom * 100)}%</span>}
       </footer>
     </main>
@@ -283,7 +286,7 @@ function EmptyState({ uploading, onUpload, onLocal }: { uploading: boolean; onUp
 }
 
 function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo }: {
-  pdf: PDFDocumentProxy; pageNumber: number; scale: number; rotation: number; onInfo: (i: PageInfo) => void;
+  pdf: PDFDocumentProxy; pageNumber: number; scale: number; rotation: number; onInfo: (i: PageInfo) => void; planId?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ width: 800, height: 600 });
@@ -322,7 +325,17 @@ function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo }: {
           <span className="animate-spin text-[#ff6a1a] text-2xl">⟳</span>
         </div>
       )}
-      {/* Konva overlay is added dynamically by DrawingViewer when a markup tool is selected */}
+      {loaded && (
+        <MarkupLayer
+          planId="local"
+          pageNumber={pageNumber}
+          pageWidth={size.width}
+          pageHeight={size.height}
+          zoom={scale}
+          rotation={rotation}
+          canvasRef={canvasRef}
+        />
+      )}
     </div>
   );
 }

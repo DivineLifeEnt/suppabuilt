@@ -1,0 +1,272 @@
+{
+  "850139ad-f4c6-4456-86c3-8f3e006ba5fb": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "850139ad-f4c6-4456-86c3-8f3e006ba5fb",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.254Z",
+    "updatedAt": "2026-09-02T03:13:14.254Z"
+  },
+  "b59131fa-007f-4b64-993e-21cdeee1b015": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "b59131fa-007f-4b64-993e-21cdeee1b015",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.271Z",
+    "updatedAt": "2026-09-02T03:13:14.271Z"
+  },
+  "36fabe3a-85fa-4056-a789-3911861da36c": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "36fabe3a-85fa-4056-a789-3911861da36c",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.298Z",
+    "updatedAt": "2026-09-02T03:13:14.298Z"
+  },
+  "5a981b8a-3b76-4f0d-94ab-03531c32b0c0": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 2,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "5a981b8a-3b76-4f0d-94ab-03531c32b0c0",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.305Z",
+    "updatedAt": "2026-09-02T03:13:14.305Z"
+  },
+  "fc701750-6760-405d-a559-ff7a1a5f3e85": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "resolved",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "fc701750-6760-405d-a559-ff7a1a5f3e85",
+    "revision": 2,
+    "createdAt": "2026-09-02T03:13:14.319Z",
+    "updatedAt": "2026-09-02T03:13:14.330Z"
+  },
+  "f8b56b6c-7a76-48b3-99bf-069851ea5774": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "f8b56b6c-7a76-48b3-99bf-069851ea5774",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.346Z",
+    "updatedAt": "2026-09-02T03:13:14.346Z"
+  },
+  "9453b160-3e5d-4472-bac1-10f3e6ccca03": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "9453b160-3e5d-4472-bac1-10f3e6ccca03",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.393Z",
+    "updatedAt": "2026-09-02T03:13:14.393Z"
+  },
+  "22a92a1b-1c66-4b47-9a75-a51ba11cc968": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "22a92a1b-1c66-4b47-9a75-a51ba11cc968",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.408Z",
+    "updatedAt": "2026-09-02T03:13:14.408Z"
+  },
+  "12cd04ad-6dad-40c9-82d6-a35aa8857395": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 2,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "12cd04ad-6dad-40c9-82d6-a35aa8857395",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.408Z",
+    "updatedAt": "2026-09-02T03:13:14.408Z"
+  },
+  "63a343f4-7e93-43f0-a65d-64a53c0be88a": {
+    "planId": "00000000-0000-4000-a000-000000000001",
+    "pageNumber": 1,
+    "tool": "pin",
+    "kind": "point",
+    "point": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "style": {
+      "color": "#EF4444",
+      "strokeWidth": 2,
+      "opacity": 1,
+      "fontSize": 16
+    },
+    "status": "open",
+    "locked": false,
+    "visible": true,
+    "zIndex": 0,
+    "authorName": "System",
+    "label": null,
+    "comment": null,
+    "id": "63a343f4-7e93-43f0-a65d-64a53c0be88a",
+    "revision": 1,
+    "createdAt": "2026-09-02T03:13:14.419Z",
+    "updatedAt": "2026-09-02T03:13:14.419Z"
+  }
+}
