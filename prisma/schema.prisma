@@ -332,3 +332,197 @@ model MeasurementGroup {
 
   @@index([planId])
 }
+
+// ─── Sprint 4: HVAC Takeoff Engine ────────────────────────────────────────────
+
+model HvacCatalogItem {
+  id             String   @id @default(cuid())
+  organizationId String
+  category       String
+  name           String
+  abbreviation   String
+  description    String?
+  active         Boolean  @default(true)
+  defaultUnit    String
+  defaultColor   String   @default("#ff6a1a")
+  defaultSymbol  String?
+  keywords       String   // JSON array
+  sortOrder      Int      @default(0)
+  authorName     String
+  revision       Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  takeoffItems       TakeoffItem[]
+  assemblyTriggers   TakeoffAssembly[]
+  assemblyComponents AssemblyComponent[]
+
+  @@index([organizationId, category, active])
+  @@index([organizationId, active])
+}
+
+model TakeoffAssembly {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  name                 String
+  description          String?
+  active               Boolean  @default(true)
+  triggerCatalogItemId String
+  triggerItem          HvacCatalogItem @relation(fields: [triggerCatalogItemId], references: [id])
+  authorName           String
+  revision             Int      @default(1)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  components           AssemblyComponent[]
+  applications         AssemblyApplication[]
+
+  @@index([organizationId, active])
+}
+
+model AssemblyComponent {
+  id            String          @id @default(cuid())
+  assemblyId    String
+  assembly      TakeoffAssembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  catalogItemId String
+  catalogItem   HvacCatalogItem @relation(fields: [catalogItemId], references: [id])
+  unit          String
+  ruleJson      String          // AssemblyRule JSON
+  wastePercent  String          @default("0")
+  sortOrder     Int             @default(0)
+
+  @@index([assemblyId])
+}
+
+model AssemblyApplication {
+  id           String          @id @default(cuid())
+  assemblyId   String
+  assembly     TakeoffAssembly @relation(fields: [assemblyId], references: [id])
+  planId       String
+  appliedAt    DateTime        @default(now())
+  appliedBy    String
+
+  takeoffItems TakeoffItem[]
+
+  @@index([assemblyId])
+  @@index([planId])
+}
+
+model TakeoffItem {
+  id                    String               @id @default(cuid())
+  planId                String
+  pageNumber            Int?
+  catalogItemId         String
+  catalogItem           HvacCatalogItem      @relation(fields: [catalogItemId], references: [id])
+  sourceJson            String               // TakeoffSource JSON
+  unit                  String
+  netQuantity           String
+  wastePercent          String               @default("0")
+  grossQuantity         String
+  equipmentTag          String?
+  sizeJson              String?              // TakeoffSize JSON
+  material              String?
+  systemId              String?
+  system                ProjectSystem?       @relation(fields: [systemId], references: [id])
+  zoneId                String?
+  zone                  ProjectZone?         @relation(fields: [zoneId], references: [id])
+  levelId               String?
+  level                 ProjectLevel?        @relation(fields: [levelId], references: [id])
+  phaseId               String?
+  phase                 ProjectPhase?        @relation(fields: [phaseId], references: [id])
+  groupId               String?
+  group                 TakeoffGroup?        @relation(fields: [groupId], references: [id])
+  assemblyApplicationId String?
+  assemblyApplication   AssemblyApplication? @relation(fields: [assemblyApplicationId], references: [id])
+  notes                 String?
+  customFieldsJson      String               @default("{}")
+  status                String               @default("open")
+  locked                Boolean              @default(false)
+  visible               Boolean              @default(true)
+  authorName            String
+  revision              Int                  @default(1)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  revisions             TakeoffItemRevision[]
+
+  @@index([planId])
+  @@index([planId, pageNumber])
+  @@index([catalogItemId])
+  @@index([systemId])
+  @@index([zoneId])
+  @@index([levelId])
+  @@index([groupId])
+  @@index([updatedAt])
+}
+
+model TakeoffItemRevision {
+  id            String      @id @default(cuid())
+  takeoffItemId String
+  item          TakeoffItem @relation(fields: [takeoffItemId], references: [id], onDelete: Cascade)
+  revision      Int
+  snapshotJson  String
+  changedBy     String
+  changedAt     DateTime    @default(now())
+
+  @@index([takeoffItemId])
+}
+
+model ProjectSystem {
+  id           String        @id @default(cuid())
+  planId       String
+  name         String
+  color        String        @default("#3B82F6")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  takeoffItems TakeoffItem[]
+
+  @@index([planId])
+}
+
+model ProjectZone {
+  id           String        @id @default(cuid())
+  planId       String
+  name         String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  takeoffItems TakeoffItem[]
+
+  @@index([planId])
+}
+
+model ProjectLevel {
+  id           String        @id @default(cuid())
+  planId       String
+  name         String
+  elevation    Float?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  takeoffItems TakeoffItem[]
+
+  @@index([planId])
+}
+
+model ProjectPhase {
+  id           String        @id @default(cuid())
+  planId       String
+  name         String
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  takeoffItems TakeoffItem[]
+
+  @@index([planId])
+}
+
+model TakeoffGroup {
+  id           String        @id @default(cuid())
+  planId       String
+  name         String
+  color        String        @default("#F59E0B")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  takeoffItems TakeoffItem[]
+
+  @@index([planId])
+}

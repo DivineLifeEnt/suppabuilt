@@ -20,6 +20,13 @@ import { MeasurementSaveStatus } from "@/components/measurement/MeasurementSaveS
 import { useMeasurementStore } from "@/stores/measurementStore";
 import type { NormalizedPoint } from "@/lib/markup/types";
 import type { Calibration } from "@/lib/measurement/types";
+import { TakeoffToolbar } from "@/components/takeoff/TakeoffToolbar";
+import { CatalogBrowser } from "@/components/takeoff/CatalogBrowser";
+import { AssemblyBrowser } from "@/components/takeoff/AssemblyBrowser";
+import { TakeoffListPanel } from "@/components/takeoff/TakeoffListPanel";
+import { TakeoffSummary } from "@/components/takeoff/TakeoffSummary";
+import { SymbolPlacementLayer } from "@/components/takeoff/SymbolPlacementLayer";
+import { useTakeoffStore } from "@/stores/takeoffStore";
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
@@ -41,6 +48,7 @@ export function StudioShell() {
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const { setTotalPages, setPage: setStorePage, setZoom: setStoreZoom } = useStudioStore();
+  const { showListPanel, showSummaryPanel, showCatalogBrowser, showAssemblyBrowser } = useTakeoffStore();
 
   const loadPdf = useCallback(async (source: string | ArrayBuffer) => {
     setLoading(true);
@@ -178,11 +186,12 @@ export function StudioShell() {
           onChange={e => e.target.files?.[0] && openLocal(e.target.files[0])} />
       </header>
 
-      {/* Markup + measurement toolbars */}
+      {/* Markup + measurement + takeoff toolbars */}
       {pdf && (
         <div className="toolbar-row flex flex-col">
           <StudioToolbar />
           <MeasurementToolbar />
+          <TakeoffToolbar />
         </div>
       )}
 
@@ -206,6 +215,11 @@ export function StudioShell() {
         </div>
       </aside>
 
+      {/* Takeoff side panels (catalog / assembly browser) */}
+      {pdf && showCatalogBrowser && <CatalogBrowser />}
+      {pdf && showAssemblyBrowser && <AssemblyBrowser />}
+      {pdf && showListPanel && <TakeoffListPanel />}
+
       {/* Main canvas */}
       <section ref={viewportRef} className="canvas-grid relative min-h-0 min-w-0 overflow-auto">
         {error && (
@@ -225,7 +239,7 @@ export function StudioShell() {
           </div>
         ) : pdf ? (
           <div className="flex min-h-full min-w-full items-center justify-center p-8">
-            <PdfPageWithMarkup pdf={pdf} pageNumber={page} scale={zoom} rotation={rotation} onInfo={setPageInfo} />
+            <PdfPageWithMarkup pdf={pdf} pageNumber={page} scale={zoom} rotation={rotation} onInfo={setPageInfo} planId={plan?.id ?? "local"} />
           </div>
         ) : (
           <EmptyState uploading={uploadProgress} onUpload={() => inputRef.current?.click()} onLocal={openLocal} />
@@ -245,6 +259,7 @@ export function StudioShell() {
           </div>
         </div>
       )}
+      {pdf && showSummaryPanel && plan && <TakeoffSummary planId={plan.id} />}
 
       {/* Status bar */}
       <footer className="statusbar flex items-center gap-4 border-t border-[#26313c] bg-[#0b1016] px-3 text-[10px] text-[#73808c]">
@@ -308,7 +323,7 @@ function EmptyState({ uploading, onUpload, onLocal }: { uploading: boolean; onUp
   );
 }
 
-function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo }: {
+function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo, planId = "local" }: {
   pdf: PDFDocumentProxy; pageNumber: number; scale: number; rotation: number; onInfo: (i: PageInfo) => void; planId?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -402,13 +417,22 @@ function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo }: {
       )}
       {calibDialogPoints && (
         <CalibrationDialog
-          planId="local"
+          planId={planId}
           pageNumber={pageNumber}
           points={calibDialogPoints}
           pageWidth={size.width}
           pageHeight={size.height}
           onSaved={handleCalibSaved}
           onCancel={() => setCalibDialogPoints(null)}
+        />
+      )}
+      {loaded && (
+        <SymbolPlacementLayer
+          planId={planId}
+          pageNumber={pageNumber}
+          canvasWidth={size.width}
+          canvasHeight={size.height}
+          createdBy="Studio User"
         />
       )}
     </div>
