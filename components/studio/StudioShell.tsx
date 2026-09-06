@@ -27,6 +27,10 @@ import { TakeoffListPanel } from "@/components/takeoff/TakeoffListPanel";
 import { TakeoffSummary } from "@/components/takeoff/TakeoffSummary";
 import { SymbolPlacementLayer } from "@/components/takeoff/SymbolPlacementLayer";
 import { useTakeoffStore } from "@/stores/takeoffStore";
+import { SessionHeader } from "@/components/collaboration/SessionHeader";
+import { ConnectionStatus } from "@/components/collaboration/ConnectionStatus";
+import { ConflictDialog } from "@/components/collaboration/ConflictDialog";
+import { useCollaborationStore } from "@/stores/collaborationStore";
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
@@ -49,6 +53,7 @@ export function StudioShell() {
 
   const { setTotalPages, setPage: setStorePage, setZoom: setStoreZoom } = useStudioStore();
   const { showListPanel, showSummaryPanel, showCatalogBrowser, showAssemblyBrowser } = useTakeoffStore();
+  const { conflicts } = useCollaborationStore();
 
   const loadPdf = useCallback(async (source: string | ArrayBuffer) => {
     setLoading(true);
@@ -175,6 +180,9 @@ export function StudioShell() {
             </div>
           </>
         )}
+        <div className="desktop-only">
+          <SessionHeader />
+        </div>
         <button
           className="ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-md bg-[#ff6a1a] px-3 text-[11px] font-bold text-white hover:bg-[#ff7b34] transition-colors"
           onClick={() => inputRef.current?.click()}
@@ -260,6 +268,7 @@ export function StudioShell() {
         </div>
       )}
       {pdf && showSummaryPanel && plan && <TakeoffSummary planId={plan.id} />}
+      {conflicts.length > 0 && <ConflictDialog />}
 
       {/* Status bar */}
       <footer className="statusbar flex items-center gap-4 border-t border-[#26313c] bg-[#0b1016] px-3 text-[10px] text-[#73808c]">
@@ -271,6 +280,7 @@ export function StudioShell() {
         {pageInfo && <span className="desktop-only">{formatDimensions(pageInfo.width, pageInfo.height)} · {rotation}°</span>}
         {pdf && <MarkupSaveStatus />}
         {pdf && <MeasurementSaveStatus />}
+        <ConnectionStatus />
         <span className="ml-auto desktop-only text-[#556370]">← → pages · Ctrl +/− zoom · Ctrl 0 fit · R rotate · V select · P pen</span>
         {pdf && <span className="md:hidden">Sheet {page} / {pdf.numPages} · {Math.round(zoom * 100)}%</span>}
       </footer>
