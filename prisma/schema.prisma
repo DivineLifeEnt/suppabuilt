@@ -964,6 +964,273 @@ model CarryForwardDecision {
   @@index([sourceAggregateType, sourceAggregateId])
 }
 
+// ─── Sprint 7: Estimating & Exports ──────────────────────────────────────────
+
+model Estimate {
+  id               String    @id @default(cuid())
+  organizationId   String
+  projectId        String
+  estimateNumber   String
+  name             String
+  description      String?
+  currency         String    @default("USD")
+  status           String    @default("draft")
+  currentVersionId String?   @unique
+  createdBy        String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  versions       EstimateVersion[]
+  currentVersion EstimateVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+
+  @@unique([organizationId, estimateNumber])
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([status])
+}
+
+model EstimateVersion {
+  id                       String   @id @default(cuid())
+  estimateId               String
+  estimate                 Estimate @relation(fields: [estimateId], references: [id])
+  versionNumber            Int
+  status                   String   @default("draft")
+  currency                 String
+  calculationPolicyVersion String   @default("1")
+  createdBy                String
+  submittedBy              String?
+  approvedBy               String?
+  lockedBy                 String?
+  submittedAt              DateTime?
+  approvedAt               DateTime?
+  lockedAt                 DateTime?
+  revision                 Int      @default(1)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  currentForEstimate EstimateVersion? @relation("CurrentVersion")
+  sections           EstimateSection[]
+  adjustments        EstimateVersionAdjustment[]
+  alternates         EstimateAlternate[]
+  exclusions         EstimateExclusion[]
+  qualifications     EstimateQualification[]
+  reviewDecisions    EstimateReviewDecision[]
+  exportJobs         ExportJob[]
+
+  @@index([estimateId])
+  @@index([status])
+}
+
+model EstimateSection {
+  id          String           @id @default(cuid())
+  versionId   String
+  version     EstimateVersion  @relation(fields: [versionId], references: [id])
+  parentId    String?
+  parent      EstimateSection? @relation("SectionChildren", fields: [parentId], references: [id])
+  children    EstimateSection[] @relation("SectionChildren")
+  name        String
+  description String?
+  sortOrder   Int              @default(0)
+  depth       Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  lines EstimateLine[]
+
+  @@index([versionId])
+  @@index([parentId])
+}
+
+model EstimateLine {
+  id                  String                      @id @default(cuid())
+  versionId           String
+  sectionId           String?
+  section             EstimateSection?            @relation(fields: [sectionId], references: [id])
+  costCode            String?
+  description         String
+  category            String                      @default("material")
+  quantity            String
+  unit                String
+  unitMaterialCost    String                      @default("0")
+  laborHoursPerUnit   String                      @default("0")
+  burdenedLaborRate   String                      @default("0")
+  unitEquipmentCost   String                      @default("0")
+  unitSubcontractCost String                      @default("0")
+  unitOtherCost       String                      @default("0")
+  wastePercent        String                      @default("0")
+  notes               String?
+  included            Boolean                     @default(true)
+  isAlternate         Boolean                     @default(false)
+  alternateId         String?
+  sortOrder           Int                         @default(0)
+  sourceSnapshotId    String?
+  snapshot            EstimateLineSourceSnapshot? @relation(fields: [sourceSnapshotId], references: [id])
+  revision            Int                         @default(1)
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+
+  @@index([versionId])
+  @@index([sectionId])
+  @@index([alternateId])
+}
+
+model EstimateLineSourceSnapshot {
+  id               String   @id @default(cuid())
+  takeoffItemId    String
+  takeoffRevision  Int
+  quantity         String
+  unit             String
+  drawingVersionId String?
+  classifications  String
+  snapshotAt       DateTime @default(now())
+  isStale          Boolean  @default(false)
+
+  lines EstimateLine[]
+
+  @@index([takeoffItemId])
+}
+
+model EstimateVersionAdjustment {
+  id             String          @id @default(cuid())
+  versionId      String
+  version        EstimateVersion @relation(fields: [versionId], references: [id])
+  kind           String
+  label          String
+  rate           String?
+  fixedAmount    String?
+  currency       String?
+  basis          String
+  taxable        Boolean         @default(false)
+  sortOrder      Int             @default(0)
+  policySnapshot String
+
+  @@index([versionId])
+}
+
+model EstimateAlternate {
+  id                    String          @id @default(cuid())
+  versionId             String
+  version               EstimateVersion @relation(fields: [versionId], references: [id])
+  name                  String
+  description           String?
+  kind                  String          @default("add")
+  included              Boolean         @default(false)
+  mutuallyExclusiveGroup String?
+  sortOrder             Int             @default(0)
+
+  @@index([versionId])
+}
+
+model EstimateExclusion {
+  id        String          @id @default(cuid())
+  versionId String
+  version   EstimateVersion @relation(fields: [versionId], references: [id])
+  text      String
+  scope     String          @default("estimate")
+  sectionId String?
+  sortOrder Int             @default(0)
+}
+
+model EstimateQualification {
+  id        String          @id @default(cuid())
+  versionId String
+  version   EstimateVersion @relation(fields: [versionId], references: [id])
+  text      String
+  internal  Boolean         @default(false)
+  sortOrder Int             @default(0)
+}
+
+model EstimateReviewDecision {
+  id        String          @id @default(cuid())
+  versionId String
+  version   EstimateVersion @relation(fields: [versionId], references: [id])
+  actorId   String
+  action    String
+  comment   String?
+  decidedAt DateTime        @default(now())
+
+  @@index([versionId])
+}
+
+model CostCode {
+  id             String   @id @default(cuid())
+  organizationId String
+  code           String
+  description    String
+  category       String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model LaborRateSchedule {
+  id             String   @id @default(cuid())
+  organizationId String
+  classification String
+  burdenedRate   String
+  currency       String   @default("USD")
+  effectiveDate  DateTime
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([effectiveDate])
+}
+
+model ExportTemplate {
+  id               String   @id @default(cuid())
+  organizationId   String
+  name             String
+  exportType       String
+  isCustomerFacing Boolean  @default(false)
+  configJson       String
+  createdBy        String
+  active           Boolean  @default(true)
+  revision         Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model ExportJob {
+  id              String           @id @default(cuid())
+  organizationId  String
+  projectId       String
+  requestedBy     String
+  exportType      String
+  status          String           @default("queued")
+  sourceIds       String
+  templateId      String?
+  parametersJson  String
+  idempotencyKey  String           @unique
+  progress        Int              @default(0)
+  stage           String?
+  errorCode       String?
+  errorMessage    String?
+  attemptCount    Int              @default(0)
+  maxAttempts     Int              @default(3)
+  nextAttemptAt   DateTime?
+  versionId       String?
+  estimateVersion EstimateVersion? @relation(fields: [versionId], references: [id])
+  outputKey       String?
+  outputChecksum  String?
+  outputSizeBytes Int?
+  expiresAt       DateTime?
+  correlationId   String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
 model AggregateLineage {
   id                     String   @id @default(cuid())
   sourceAggregateType    String

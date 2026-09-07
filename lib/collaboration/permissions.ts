@@ -9,7 +9,22 @@ export type Permission =
   | "comment:write"
   | "comment:resolve-any"
   | "session:manage"
-  | "project:manage";
+  | "project:manage"
+  // Sprint 7: Estimating
+  | "estimate:view"
+  | "estimate:view-cost"
+  | "estimate:edit"
+  | "estimate:submit-review"
+  | "estimate:approve"
+  | "estimate:lock"
+  // Sprint 7: Rates
+  | "rates:view"
+  | "rates:manage"
+  // Sprint 7: Exports
+  | "export:create-internal"
+  | "export:create-customer"
+  | "export:template-manage"
+  | "export:download";
 
 const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
   "project-admin": [
@@ -21,10 +36,38 @@ const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
     "comment:resolve-any",
     "session:manage",
     "project:manage",
+    // Estimating
+    "estimate:view",
+    "estimate:view-cost",
+    "estimate:edit",
+    "estimate:submit-review",
+    "estimate:approve",
+    "estimate:lock",
+    // Rates
+    "rates:view",
+    "rates:manage",
+    // Exports
+    "export:create-internal",
+    "export:create-customer",
+    "export:template-manage",
+    "export:download",
   ],
-  "editor": ["view", "markup:write", "measurement:write", "takeoff:write", "comment:write"],
-  "commenter": ["view", "comment:write"],
-  "viewer": ["view"],
+  "editor": [
+    "view",
+    "markup:write",
+    "measurement:write",
+    "takeoff:write",
+    "comment:write",
+    "estimate:view",
+    "estimate:view-cost",
+    "estimate:edit",
+    "estimate:submit-review",
+    "rates:view",
+    "export:create-internal",
+    "export:download",
+  ],
+  "commenter": ["view", "comment:write", "estimate:view"],
+  "viewer": ["view", "estimate:view"],
 };
 
 export function hasPermission(role: ProjectRole, permission: Permission): boolean {
