@@ -11,10 +11,20 @@ model User {
   id          String        @id @default(cuid())
   name        String?
   email       String        @unique
+  avatarUrl   String?
   markups     Markup[]
   sessions    SessionUser[]
   activities  Activity[]
   createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt @default(now())
+
+  orgMemberships        OrganizationMembership[]
+  projectMemberships    ProjectMembership[]
+  sessionParticipants   SessionParticipant[]
+  comments              Comment[]
+  assignedComments      Comment[]               @relation("AssignedComments")
+  mentionedIn           Mention[]
+  auditEvents           AuditEvent[]            @relation("ActorAuditEvents")
 }
 
 model Project {
@@ -210,6 +220,186 @@ enum MeasurementType {
   LENGTH
   AREA
   COUNT
+}
+
+// ─── Sprint 5: Collaboration ──────────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships OrganizationMembership[]
+  collabSessions CollaborationSession[]
+}
+
+model OrganizationMembership {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  role           String       // OrganizationRole
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model ProjectMembership {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      String   // ProjectRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model CollaborationSession {
+  id             String       @id @default(cuid())
+  planId         String
+  projectId      String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  description    String?
+  status         String       @default("active")
+  createdBy      String
+  endedBy        String?
+  endedAt        DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  participants SessionParticipant[]
+  comments     Comment[]
+  auditEvents  AuditEvent[]
+
+  @@index([planId])
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([status])
+}
+
+model SessionParticipant {
+  id        String               @id @default(cuid())
+  sessionId String
+  session   CollaborationSession @relation(fields: [sessionId], references: [id])
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id])
+  role      String               // ProjectRole
+  joinedAt  DateTime             @default(now())
+  leftAt    DateTime?
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model Comment {
+  id         String               @id @default(cuid())
+  sessionId  String
+  session    CollaborationSession @relation(fields: [sessionId], references: [id])
+  planId     String
+  pageNumber Int?
+  parentId   String?
+  parent     Comment?             @relation("CommentReplies", fields: [parentId], references: [id])
+  replies    Comment[]            @relation("CommentReplies")
+  pinJson    String?
+  targetType String?
+  targetId   String?
+  authorId   String
+  author     User                 @relation(fields: [authorId], references: [id])
+  body       String
+  status     String               @default("open")
+  resolvedBy String?
+  resolvedAt DateTime?
+  deletedAt  DateTime?
+  assigneeId String?
+  assignee   User?                @relation("AssignedComments", fields: [assigneeId], references: [id])
+  revision   Int                  @default(1)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  mentions Mention[]
+
+  @@index([sessionId])
+  @@index([planId, pageNumber])
+  @@index([targetType, targetId])
+  @@index([assigneeId])
+  @@index([status])
+}
+
+model Mention {
+  id              String   @id @default(cuid())
+  commentId       String
+  comment         Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUserId String
+  mentionedUser   User     @relation(fields: [mentionedUserId], references: [id])
+  createdAt       DateTime @default(now())
+
+  @@unique([commentId, mentionedUserId])
+  @@index([mentionedUserId])
+}
+
+model AuditEvent {
+  id                String               @id @default(cuid())
+  organizationId    String
+  projectId         String
+  sessionId         String?
+  session           CollaborationSession? @relation(fields: [sessionId], references: [id])
+  actorId           String
+  actor             User                 @relation("ActorAuditEvents", fields: [actorId], references: [id])
+  actorName         String
+  action            String
+  aggregateType     String
+  aggregateId       String
+  previousRevision  Int?
+  resultingRevision Int?
+  patchJson         String?
+  origin            String               @default("online")
+  correlationId     String
+  createdAt         DateTime             @default(now())
+
+  @@index([organizationId])
+  @@index([sessionId])
+  @@index([aggregateType, aggregateId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model IdempotencyRecord {
+  id        String   @id
+  sessionId String
+  actorId   String
+  result    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([sessionId])
+  @@index([expiresAt])
+}
+
+model RealtimeDeliveryFailure {
+  id           String    @id @default(cuid())
+  channel      String
+  eventType    String
+  eventJson    String
+  attemptCount Int       @default(1)
+  lastError    String
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([resolvedAt])
 }
 
 model PlanMarkup {
@@ -525,4 +715,269 @@ model TakeoffGroup {
   takeoffItems TakeoffItem[]
 
   @@index([planId])
+}
+
+// ─── Sprint 6: Drawing Set Version Management ─────────────────────────────────
+
+model DrawingSet {
+  id               String   @id @default(cuid())
+  projectId        String
+  organizationId   String
+  name             String
+  discipline       String?
+  currentVersionId String?  @unique
+  createdBy        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  versions         DrawingSetVersion[]
+  currentVersion   DrawingSetVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  comparisons      DrawingComparison[]
+  jobs             ProcessingJob[]
+
+  @@index([projectId])
+  @@index([organizationId])
+}
+
+model DrawingSetVersion {
+  id               String     @id @default(cuid())
+  drawingSetId     String
+  drawingSet       DrawingSet @relation(fields: [drawingSetId], references: [id])
+  revisionName     String
+  revisionNumber   String?
+  issueDate        DateTime?
+  receivedDate     DateTime?
+  description      String?
+  sourceFilename   String
+  checksum         String
+  uploadedBy       String
+  status           String     @default("processing")
+  pageCount        Int?
+  processingError  String?
+  pdfKey           String?
+  revision         Int        @default(1)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  pages            DrawingPageVersion[]
+  currentForSet    DrawingSet?          @relation("CurrentVersion")
+  baseComparisons  DrawingComparison[]  @relation("BaseVersion")
+  compComparisons  DrawingComparison[]  @relation("ComparisonVersion")
+  baseMatches      PageMatch[]          @relation("BaseVersion")
+  compMatches      PageMatch[]          @relation("ComparisonVersion")
+  jobs             ProcessingJob[]
+
+  @@unique([drawingSetId, checksum])
+  @@index([drawingSetId])
+  @@index([status])
+}
+
+model DrawingPageVersion {
+  id                    String             @id @default(cuid())
+  versionId             String
+  version               DrawingSetVersion  @relation(fields: [versionId], references: [id])
+  drawingSetId          String
+  pageIndex             Int
+  sheetNumber           String?
+  sheetTitle            String?
+  discipline            String?
+  revisionLabel         String?
+  revisionDate          DateTime?
+  widthPt               Float
+  heightPt              Float
+  nativeRotation        Int                @default(0)
+  contentChecksum       String?
+  thumbnailKey          String?
+  renderKey             String?
+  processingStatus      String             @default("pending")
+  processingError       String?
+  userConfirmedMetadata Boolean            @default(false)
+  revision              Int                @default(1)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  baseMatches           PageMatch[]        @relation("BasePage")
+  comparisonMatches     PageMatch[]        @relation("ComparisonPage")
+
+  @@unique([versionId, pageIndex])
+  @@index([versionId])
+  @@index([drawingSetId])
+}
+
+model PageMatch {
+  id                  String              @id @default(cuid())
+  baseVersionId       String
+  baseVersion         DrawingSetVersion   @relation("BaseVersion", fields: [baseVersionId], references: [id])
+  comparisonVersionId String
+  comparisonVersion   DrawingSetVersion   @relation("ComparisonVersion", fields: [comparisonVersionId], references: [id])
+  drawingSetId        String
+  basePageId          String?
+  basePage            DrawingPageVersion? @relation("BasePage", fields: [basePageId], references: [id])
+  comparisonPageId    String?
+  comparisonPage      DrawingPageVersion? @relation("ComparisonPage", fields: [comparisonPageId], references: [id])
+  status              String
+  confidence          Float
+  matchReasonsJson    String
+  userConfirmed       Boolean             @default(false)
+  revision            Int                 @default(1)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  alignments          PageAlignment[]
+  comparisons         DrawingComparison[]
+
+  @@index([baseVersionId])
+  @@index([comparisonVersionId])
+  @@index([drawingSetId])
+}
+
+model PageAlignment {
+  id            String      @id @default(cuid())
+  pageMatchId   String
+  pageMatch     PageMatch   @relation(fields: [pageMatchId], references: [id])
+  method        String
+  matrixJson    String
+  qualityScore  Float?
+  residualError Float?
+  userConfirmed Boolean     @default(false)
+  confirmedBy   String?
+  confirmedAt   DateTime?
+  revision      Int         @default(1)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  comparisons   DrawingComparison[]
+
+  @@index([pageMatchId])
+}
+
+model DrawingComparison {
+  id                  String             @id @default(cuid())
+  baseVersionId       String
+  baseVersion         DrawingSetVersion  @relation("BaseVersion", fields: [baseVersionId], references: [id])
+  comparisonVersionId String
+  comparisonVersion   DrawingSetVersion  @relation("ComparisonVersion", fields: [comparisonVersionId], references: [id])
+  drawingSetId        String
+  drawingSet          DrawingSet         @relation(fields: [drawingSetId], references: [id])
+  pageMatchId         String
+  pageMatch           PageMatch          @relation(fields: [pageMatchId], references: [id])
+  alignmentId         String?
+  alignment           PageAlignment?     @relation(fields: [alignmentId], references: [id])
+  jobId               String?
+  status              String             @default("pending")
+  previewKey          String?
+  maskKey             String?
+  overlayKey          String?
+  metricsJson         String?
+  idempotencyKey      String             @unique
+  revision            Int                @default(1)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  regions               ChangeRegion[]
+  carryForwardDecisions CarryForwardDecision[]
+  jobs                  ProcessingJob[]
+
+  @@index([drawingSetId])
+  @@index([baseVersionId])
+  @@index([status])
+}
+
+model ChangeRegion {
+  id                String            @id @default(cuid())
+  comparisonId      String
+  comparison        DrawingComparison @relation(fields: [comparisonId], references: [id])
+  boundsJson        String
+  kind              String
+  changedPixelCount Int
+  strength          Float
+  reviewStatus      String            @default("unreviewed")
+  revision          Int               @default(1)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([comparisonId])
+  @@index([reviewStatus])
+}
+
+model ProcessingJob {
+  id             String             @id @default(cuid())
+  type           String
+  organizationId String
+  projectId      String
+  drawingSetId   String?
+  drawingSet     DrawingSet?        @relation(fields: [drawingSetId], references: [id])
+  versionId      String?
+  version        DrawingSetVersion? @relation(fields: [versionId], references: [id])
+  comparisonId   String?
+  comparison     DrawingComparison? @relation(fields: [comparisonId], references: [id])
+  state          String             @default("queued")
+  progress       Int                @default(0)
+  stage          String?
+  errorCode      String?
+  errorMessage   String?
+  maxAttempts    Int                @default(3)
+  attemptCount   Int                @default(0)
+  nextAttemptAt  DateTime?
+  correlationId  String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  attempts       ProcessingJobAttempt[]
+
+  @@index([type, state])
+  @@index([organizationId])
+  @@index([versionId])
+  @@index([comparisonId])
+  @@index([nextAttemptAt])
+}
+
+model ProcessingJobAttempt {
+  id            String        @id @default(cuid())
+  jobId         String
+  job           ProcessingJob @relation(fields: [jobId], references: [id])
+  attemptNumber Int
+  startedAt     DateTime      @default(now())
+  endedAt       DateTime?
+  state         String
+  errorCode     String?
+  errorMessage  String?
+
+  @@index([jobId])
+}
+
+model CarryForwardDecision {
+  id                  String            @id @default(cuid())
+  comparisonId        String
+  comparison          DrawingComparison @relation(fields: [comparisonId], references: [id])
+  sourceAggregateType String
+  sourceAggregateId   String
+  targetAggregateId   String?
+  decision            String
+  transformJson       String?
+  reason              String?
+  actorId             String
+  decidedAt           DateTime          @default(now())
+  idempotencyKey      String            @unique
+
+  @@index([comparisonId])
+  @@index([sourceAggregateType, sourceAggregateId])
+}
+
+model AggregateLineage {
+  id                     String   @id @default(cuid())
+  sourceAggregateType    String
+  sourceAggregateId      String
+  sourceVersionId        String
+  targetAggregateType    String
+  targetAggregateId      String
+  targetVersionId        String
+  carryForwardDecisionId String
+  transformJson          String?
+  createdAt              DateTime @default(now())
+
+  @@unique([sourceAggregateType, sourceAggregateId, targetVersionId])
+  @@index([sourceAggregateType, sourceAggregateId])
+  @@index([targetAggregateType, targetAggregateId])
+  @@index([carryForwardDecisionId])
 }
