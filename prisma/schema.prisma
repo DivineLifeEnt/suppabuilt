@@ -85,6 +85,7 @@ model StudioSession {
   status    SessionStatus @default(ACTIVE)
 
   users     SessionUser[]
+  aiRuns    AIAnalysisRun[]
 
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
@@ -231,8 +232,9 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships OrganizationMembership[]
+  memberships    OrganizationMembership[]
   collabSessions CollaborationSession[]
+  aiPolicy       AIOrganizationPolicy?
 }
 
 model OrganizationMembership {
@@ -1247,4 +1249,100 @@ model AggregateLineage {
   @@index([sourceAggregateType, sourceAggregateId])
   @@index([targetAggregateType, targetAggregateId])
   @@index([carryForwardDecisionId])
+}
+
+// ─── Sprint 8: AI-Assisted Plan Analysis ─────────────────────────────────────
+
+model AIOrganizationPolicy {
+  id              String       @id @default(cuid())
+  orgId           String       @unique
+  aiEnabled       Boolean      @default(false)
+  monthlyLimitUsd Decimal      @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  organization    Organization @relation(fields: [orgId], references: [id])
+}
+
+model AIAnalysisRun {
+  id               String        @id @default(cuid())
+  sessionId        String
+  orgId            String
+  pageIds          String[]
+  providerName     String
+  modelVersion     String
+  status           String        @default("queued")
+  startedAt        DateTime?
+  completedAt      DateTime?
+  errorMessage     String?
+  suggestionsCount Int           @default(0)
+  tokensUsed       Int           @default(0)
+  estimatedCostUsd Decimal       @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  suggestions      AISuggestion[]
+  usageRecords     AIUsageRecord[]
+  session          StudioSession @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+  @@index([orgId])
+  @@index([status])
+}
+
+model AISuggestion {
+  id            String                 @id @default(cuid())
+  runId         String
+  pageId        String
+  kind          String
+  symbolType    String?
+  qty           Decimal?
+  unit          String?
+  description   String
+  boundingBox   Json?
+  confidence    Decimal
+  status        String                 @default("pending")
+  takeoffItemId String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  run           AIAnalysisRun          @relation(fields: [runId], references: [id])
+  decisions     AISuggestionDecision[]
+
+  @@index([runId])
+  @@index([status])
+}
+
+model AISuggestionDecision {
+  id           String       @id @default(cuid())
+  suggestionId String
+  userId       String
+  action       String
+  takeoffInput Json?
+  createdAt    DateTime     @default(now())
+  suggestion   AISuggestion @relation(fields: [suggestionId], references: [id])
+
+  @@index([suggestionId])
+}
+
+model AIUsageRecord {
+  id         String        @id @default(cuid())
+  runId      String
+  orgId      String
+  tokensUsed Int
+  costUsd    Decimal
+  recordedAt DateTime      @default(now())
+  run        AIAnalysisRun @relation(fields: [runId], references: [id])
+
+  @@index([orgId])
+  @@index([recordedAt])
+}
+
+model SymbolExample {
+  id          String   @id @default(cuid())
+  orgId       String
+  symbolType  String
+  imageBase64 String
+  confirmed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([orgId])
+  @@index([symbolType])
 }
