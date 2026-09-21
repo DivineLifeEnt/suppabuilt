@@ -398,7 +398,7 @@ function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo, planId = 
       )}
       {loaded && (
         <MarkupLayer
-          planId="local"
+          planId={planId}
           pageNumber={pageNumber}
           pageWidth={size.width}
           pageHeight={size.height}
@@ -409,7 +409,7 @@ function PdfPageWithMarkup({ pdf, pageNumber, scale, rotation, onInfo, planId = 
       )}
       {loaded && (
         <MeasurementLayer
-          planId="local"
+          planId={planId}
           pageNumber={pageNumber}
           pageWidth={size.width}
           pageHeight={size.height}
